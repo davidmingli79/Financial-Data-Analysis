@@ -1,0 +1,433 @@
+{
+  "meta": {
+    "start_date_default": "2026-04-01",
+    "mode": "A (daily snapshot; forward-fill non-daily)",
+    "no_api_key": true,
+    "notes": [
+      "This registry avoids API keys by using: Stooq (market), HKMA Open API, HK C&SD API, US BLS v1, and China NBS RSS + HTML parsing.",
+      "Some items on the original list are not reliably obtainable without licensed data or manual input (e.g., China fund daily sales total, some holdings/cash ratios). Those remain manual placeholders.",
+      "Macro series are forward-filled to daily snapshots."
+    ]
+  },
+  "series": [
+    {
+      "key": "SPX",
+      "name": "S&P 500 (^spx)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "^spx",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "HSI",
+      "name": "Hang Seng (^hsi)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "^hsi",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "NIKKEI",
+      "name": "Nikkei 225 (^nkx)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "^nkx",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "CSI300_PROXY",
+      "name": "CSI300 proxy (2827.hk)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "2827.hk",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "US10Y",
+      "name": "US 10Y yield (10yusy.b)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "10yusy.b",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "%"
+    },
+    {
+      "key": "US2Y",
+      "name": "US 2Y yield (2yusy.b)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "2yusy.b",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "%"
+    },
+    {
+      "key": "CN10Y",
+      "name": "CN 10Y yield (10ycny.b)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "10ycny.b",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "%"
+    },
+    {
+      "key": "JP10Y",
+      "name": "JP 10Y yield (10yjpy.b)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "10yjpy.b",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "%"
+    },
+    {
+      "key": "DXY_FUT",
+      "name": "DXY proxy (dx.f)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "dx.f",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "USDCNY",
+      "name": "USD/CNY (usdcny)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "usdcny",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "CNY per USD"
+    },
+    {
+      "key": "WTI",
+      "name": "WTI (cl.f)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "cl.f",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "USD/bbl"
+    },
+    {
+      "key": "BRENT",
+      "name": "Brent (cb.f)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "cb.f",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "USD/bbl"
+    },
+    {
+      "key": "GOLD",
+      "name": "Gold (xauusd)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "xauusd",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "USD/oz"
+    },
+    {
+      "key": "SILVER",
+      "name": "Silver (xagusd)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "xagusd",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "USD/oz"
+    },
+    {
+      "key": "VIX",
+      "name": "VIX proxy (vi.c)",
+      "provider": "stooq",
+      "params": {
+        "symbol": "vi.c",
+        "interval": "d"
+      },
+      "freq": "daily",
+      "unit": "index"
+    },
+    {
+      "key": "HK_EFBN_10Y",
+      "name": "HK EFBN 10Y (HKMA)",
+      "provider": "hkma",
+      "params": {
+        "path": "market-data-and-statistics/monthly-statistical-bulletin/efbn/efbn-yield-daily",
+        "field": "efn_10y",
+        "offset": 0
+      },
+      "freq": "daily",
+      "unit": "%"
+    },
+    {
+      "key": "HK_GDP_TABLE",
+      "name": "HK GDP (C&SD 310-31001)",
+      "provider": "csd",
+      "params": {
+        "tableId": "310-31001",
+        "lang": "en",
+        "full_series": 1
+      },
+      "freq": "quarterly"
+    },
+    {
+      "key": "HK_CPI_TABLE",
+      "name": "HK CPI (C&SD 52)",
+      "provider": "csd",
+      "params": {
+        "tableId": "52",
+        "lang": "en",
+        "full_series": 1
+      },
+      "freq": "monthly"
+    },
+    {
+      "key": "HK_UNEMP_TABLE",
+      "name": "HK Unemployment (C&SD 6)",
+      "provider": "csd",
+      "params": {
+        "tableId": "6",
+        "lang": "en",
+        "full_series": 1
+      },
+      "freq": "monthly"
+    },
+    {
+      "key": "HK_RETAIL_TABLE",
+      "name": "HK Retail Sales (C&SD 620-67001)",
+      "provider": "csd",
+      "params": {
+        "tableId": "620-67001",
+        "lang": "en",
+        "full_series": 1
+      },
+      "freq": "monthly"
+    },
+    {
+      "key": "US_CPI_SA",
+      "name": "US CPI-U SA (index) [BLS CUUR0000SA0]",
+      "provider": "bls",
+      "params": {
+        "seriesId": "CUUR0000SA0"
+      },
+      "freq": "monthly",
+      "unit": "index"
+    },
+    {
+      "key": "US_UNRATE",
+      "name": "US Unemployment rate (%) [BLS LNS14000000]",
+      "provider": "bls",
+      "params": {
+        "seriesId": "LNS14000000"
+      },
+      "freq": "monthly",
+      "unit": "%"
+    },
+    {
+      "key": "US_NFP_LEVEL",
+      "name": "US Total nonfarm employment (thousands) [BLS CES0000000001]",
+      "provider": "bls",
+      "params": {
+        "seriesId": "CES0000000001"
+      },
+      "freq": "monthly",
+      "unit": "thousands"
+    },
+    {
+      "key": "US_AHE",
+      "name": "US Avg hourly earnings ($/hr) [BLS CES0500000003]",
+      "provider": "bls",
+      "params": {
+        "seriesId": "CES0500000003"
+      },
+      "freq": "monthly",
+      "unit": "USD/hr"
+    },
+    {
+      "key": "US_PPI_FD",
+      "name": "US PPI Final Demand (index) [BLS WPUFD4]",
+      "provider": "bls",
+      "params": {
+        "seriesId": "WPUFD4"
+      },
+      "freq": "monthly",
+      "unit": "index"
+    },
+    {
+      "key": "CN_CPI_YOY",
+      "name": "CN CPI YoY (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Consumer Price Index in",
+        "extract": "cpi_yoy"
+      },
+      "freq": "monthly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_PPI_YOY",
+      "name": "CN PPI YoY (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Industrial Producer Price Indexes in",
+        "extract": "ppi_yoy"
+      },
+      "freq": "monthly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_PMI_MFG",
+      "name": "CN PMI manufacturing [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Purchasing Managers",
+        "extract": "pmi_mfg"
+      },
+      "freq": "monthly",
+      "unit": "index"
+    },
+    {
+      "key": "CN_PMI_NM",
+      "name": "CN PMI non-manufacturing [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Purchasing Managers",
+        "extract": "pmi_nonmfg"
+      },
+      "freq": "monthly",
+      "unit": "index"
+    },
+    {
+      "key": "CN_RETAIL_YOY",
+      "name": "CN Retail sales YoY (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Total Retail Sales of Consumer Goods",
+        "extract": "retail_yoy"
+      },
+      "freq": "monthly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_FAI_YOY",
+      "name": "CN Fixed asset investment YoY (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Investment in Fixed Assets",
+        "extract": "fai_yoy"
+      },
+      "freq": "monthly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_UNEMP_RATE",
+      "name": "CN Urban surveyed unemployment rate (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "National Economy Got off",
+        "extract": "unemp_q1"
+      },
+      "freq": "quarterly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_GDP_YOY",
+      "name": "CN GDP YoY (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "Preliminary Accounting Results of GDP",
+        "extract": "gdp_q_yoy"
+      },
+      "freq": "quarterly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_GDP_QOQ",
+      "name": "CN GDP QoQ (%) [NBS PressRelease]",
+      "provider": "nbs_rss",
+      "params": {
+        "pattern": "National Economy Got off",
+        "extract": "gdp_qoq"
+      },
+      "freq": "quarterly",
+      "unit": "%"
+    },
+    {
+      "key": "CN_M2_YOY",
+      "name": "CN M2 YoY (%) [needs PBoC/SDMX/licensed]",
+      "provider": "manual",
+      "freq": "monthly",
+      "unit": "%"
+    }
+  ],
+  "derived": [
+    {
+      "key": "US_10Y2Y_BPS",
+      "name": "US 10Y-2Y spread (bps)",
+      "op": "spread_bps",
+      "a": "US10Y",
+      "b": "US2Y",
+      "unit": "bps"
+    },
+    {
+      "key": "US_CPI_YOY",
+      "name": "US CPI YoY (%)",
+      "op": "yoy_pct",
+      "a": "US_CPI_SA",
+      "lag_days": 365,
+      "unit": "%"
+    },
+    {
+      "key": "US_PPI_YOY",
+      "name": "US PPI Final Demand YoY (%)",
+      "op": "yoy_pct",
+      "a": "US_PPI_FD",
+      "lag_days": 365,
+      "unit": "%"
+    },
+    {
+      "key": "US_AHE_YOY",
+      "name": "US Avg hourly earnings YoY (%)",
+      "op": "yoy_pct",
+      "a": "US_AHE",
+      "lag_days": 365,
+      "unit": "%"
+    },
+    {
+      "key": "US_NFP_MOM",
+      "name": "US Nonfarm payrolls change (thousands, MoM)",
+      "op": "diff_lag",
+      "a": "US_NFP_LEVEL",
+      "lag_days": 30,
+      "unit": "thousands"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Wide CSV Viewer</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:#0b0f17;color:#e8eefc}
+    .wrap{max-width:1200px;margin:22px auto;padding:0 16px}
+    .card{background:#101826;border:1px solid #20304a;border-radius:14px;padding:14px;margin:12px 0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{border:1px solid #20304a;background:#18243a;color:#e8eefc;border-radius:12px;padding:10px 12px;cursor:pointer}
+    input,select{border:1px solid #20304a;background:#18243a;color:#e8eefc;border-radius:12px;padding:9px 10px}
+    canvas{width:100%;height:420px;border:1px solid #20304a;border-radius:12px;background:#0f1522}
+    .muted{color:#9bb0d1;font-size:13px;line-height:1.5}
+    table{border-collapse:collapse;width:100%;font-size:12px}
+    th,td{border-bottom:1px solid #20304a;padding:8px 10px;white-space:nowrap}
+    th{position:sticky;top:0;background:#0f1522;text-align:left}
+    td:first-child,th:first-child{position:sticky;left:0;background:#0f1522;font-family:ui-monospace,Menlo,Consolas,monospace}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{background:#18243a;border:1px solid #20304a;border-radius:999px;padding:4px 8px;font-size:11px;color:#9bb0d1}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>每日数据面板（导入 daily_wide.csv）</h1>
+  <div class="card muted">
+    1) 先运行 <b>macro_daily_collector.py</b> 生成 <code>out/daily_wide.csv</code>。<br/>
+    2) 在此选择该 CSV 文件，本页会绘制从 <b>2026-04-01</b> 起的每日曲线（宏观月/季频会呈“阶梯状”）。<br/>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="file" type="file" accept=".csv" />
+      <label class="muted">显示最近</label>
+      <select id="days">
+        <option value="0">全部</option>
+        <option value="30">30天</option>
+        <option value="60" selected>60天</option>
+        <option value="120">120天</option>
+      </select>
+      <button id="download" class="btn">下载当前视图CSV</button>
+    </div>
+    <div class="muted" id="info" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label class="muted">选择序列（最多 6 条以便看清）</label>
+      <select id="series" multiple size="6" style="min-width:360px;max-width:100%;"></select>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div style="margin-top:12px;">
+      <canvas id="c" width="1200" height="420"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="muted">数据表（最多显示 200 行）</div>
+    <div style="overflow:auto;max-height:520px;border-radius:12px;border:1px solid #20304a;margin-top:10px;">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let rows = [];
+let headers = [];
+let selectedKeys = [];
+let viewRows = [];
+
+const fileEl = document.getElementById('file');
+const daysEl = document.getElementById('days');
+const seriesEl = document.getElementById('series');
+const infoEl = document.getElementById('info');
+const chipsEl = document.getElementById('chips');
+const theadEl = document.getElementById('thead');
+const tbodyEl = document.getElementById('tbody');
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function parseCSV(text){
+  const lines = text.trim().split(/\\r?\\n/);
+  if (lines.length < 2) return {headers:[], rows:[]};
+  const headers = lines[0].split(',');
+  const rows = [];
+  for (let i=1;i<lines.length;i++){
+    const cols = lines[i].split(',');
+    const r = {};
+    headers.forEach((h, j)=> r[h] = cols[j] ?? '');
+    rows.push(r);
+  }
+  return {headers, rows};
+}
+function fmt(v){
+  if (v === '' || v === null || v === undefined) return '—';
+  const n = Number(v);
+  if (!Number.isFinite(n)) return String(v);
+  const abs = Math.abs(n);
+  const d = abs>=1000?0:abs>=100?1:abs>=1?2:4;
+  return n.toLocaleString(undefined,{maximumFractionDigits:d});
+}
+function sliceByDays(rs, days){
+  if (!days || days===0) return rs;
+  return rs.slice(-days);
+}
+function updateSeriesSelect(){
+  seriesEl.innerHTML = '';
+  const keys = headers.filter(h=>h!=='date');
+  keys.forEach(k=>{
+    const opt=document.createElement('option');
+    opt.value=k; opt.textContent=k;
+    seriesEl.appendChild(opt);
+  });
+  // default selection
+  const defaults = ['SPX','US10Y','US2Y','US_10Y2Y_BPS','WTI','VIX'];
+  selectedKeys = defaults.filter(k=>keys.includes(k)).slice(0,6);
+  for (const opt of seriesEl.options){
+    if (selectedKeys.includes(opt.value)) opt.selected = true;
+  }
+  updateChips();
+}
+function updateChips(){
+  chipsEl.innerHTML='';
+  selectedKeys.forEach(k=>{
+    const s=document.createElement('span');
+    s.className='chip';
+    s.textContent=k;
+    chipsEl.appendChild(s);
+  });
+}
+function draw(){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(420 * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,rect.width,420);
+
+  const padL=58,padR=18,padT=18,padB=34;
+  const x0=padL,x1=rect.width-padR,y0=padT,y1=420-padB;
+
+  ctx.strokeStyle='rgba(32,48,74,.55)';
+  for(let i=0;i<=4;i++){
+    const y=y0+(y1-y0)*i/4;
+    ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+  }
+
+  if (!viewRows.length || !selectedKeys.length){
+    ctx.fillStyle='rgba(155,176,209,.9)';
+    ctx.font='13px system-ui';
+    ctx.fillText('请选择 CSV，并选择至少一个序列', x0, y0+22);
+    return;
+  }
+
+  // y extents
+  let minV=Infinity,maxV=-Infinity;
+  for(const k of selectedKeys){
+    for(const r of viewRows){
+      const v = Number(r[k]);
+      if (!Number.isFinite(v)) continue;
+      minV=Math.min(minV,v); maxV=Math.max(maxV,v);
+    }
+  }
+  if (!Number.isFinite(minV) || !Number.isFinite(maxV) || minV===maxV){ minV-=1; maxV+=1; }
+
+  // labels
+  ctx.fillStyle='rgba(155,176,209,.85)';
+  ctx.font='11px system-ui';
+  for(let i=0;i<=4;i++){
+    const y=y0+(y1-y0)*i/4;
+    const val=maxV-(maxV-minV)*i/4;
+    ctx.fillText(fmt(val), 8, y+4);
+  }
+
+  const dates=viewRows.map(r=>r.date);
+  const maxX=Math.max(1,dates.length-1);
+  const idxs=[0,Math.floor(maxX/2),maxX];
+  idxs.forEach(ix=>{
+    const x=x0+(x1-x0)*ix/maxX;
+    ctx.fillStyle='rgba(155,176,209,.75)';
+    ctx.fillText(dates[ix]||'', Math.min(x1-80, Math.max(x0, x-28)), 410);
+  });
+
+  const pal=['#4c8dff','#37d996','#ffd166','#ff5d73','#b985ff','#6bd6ff'];
+  selectedKeys.forEach((k,i)=>{
+    ctx.strokeStyle=pal[i%pal.length];
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    let started=false;
+    viewRows.forEach((r,ix)=>{
+      const v=Number(r[k]);
+      if(!Number.isFinite(v)) return;
+      const x=x0+(x1-x0)*ix/maxX;
+      const y=y0+(y1-y0)*(1-(v-minV)/(maxV-minV));
+      if(!started){ctx.moveTo(x,y); started=true;} else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // legend
+    ctx.fillStyle=pal[i%pal.length];
+    ctx.fillRect(x1-160,y0+18*i,10,10);
+    ctx.fillStyle='rgba(232,238,252,.95)';
+    ctx.fillText(k,x1-144,y0+18*i+10);
+  });
+}
+
+function renderTable(){
+  theadEl.innerHTML='';
+  tbodyEl.innerHTML='';
+  const cols=['date', ...selectedKeys];
+  cols.forEach(c=>{
+    const th=document.createElement('th'); th.textContent=c; theadEl.appendChild(th);
+  });
+  const slice=viewRows.slice(-200);
+  slice.forEach(r=>{
+    const tr=document.createElement('tr');
+    cols.forEach(c=>{
+      const td=document.createElement('td');
+      td.textContent = c==='date' ? r.date : fmt(r[c]);
+      tr.appendChild(td);
+    });
+    tbodyEl.appendChild(tr);
+  });
+}
+
+function updateView(){
+  const days=Number(daysEl.value||0);
+  viewRows=sliceByDays(rows,days);
+  infoEl.textContent = `共 ${rows.length} 天，当前视图 ${viewRows.length} 天；起始 ${rows[0]?.date||'—'}，结束 ${rows[rows.length-1]?.date||'—'}`;
+  draw();
+  renderTable();
+}
+
+fileEl.addEventListener('change', async ()=>{
+  const f=fileEl.files?.[0];
+  if(!f) return;
+  const text=await f.text();
+  const parsed=parseCSV(text);
+  headers=parsed.headers; rows=parsed.rows;
+  updateSeriesSelect();
+  updateView();
+});
+
+seriesEl.addEventListener('change', ()=>{
+  selectedKeys=[...seriesEl.selectedOptions].map(o=>o.value).slice(0,6);
+  updateChips();
+  updateView();
+});
+
+daysEl.addEventListener('change', updateView);
+
+document.getElementById('download').addEventListener('click', ()=>{
+  if(!viewRows.length) return;
+  const cols=['date',...selectedKeys];
+  const csv=[cols.join(','), ...viewRows.map(r=>cols.map(c=>c==='date'?r.date:(r[c]??'')).join(','))].join('\\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='view_export.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
